@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { ChevronDown, MessageCircle } from "lucide-react";
-import DotGrid from "../productSection/DotGrid";
+
 
 const faqs = [
   { q: "What is MST Blockchain?", a: "MST is a high-performance Layer-1 blockchain designed for institutional-grade security and sub-second finality." },

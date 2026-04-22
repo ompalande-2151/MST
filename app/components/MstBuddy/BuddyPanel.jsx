@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ChatBot from "./ChatBot";
+
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,24 +21,7 @@ export default function Chatbot() {
         />
       )}
 
-      {/* 3D BUTTON */}
-      
-        {isOpen === false && (
-         <div
-            onClick={() => setIsOpen(true)}
-            style={{
-            position: "fixed",
-            bottom: "130px",  
-            right: "80px",     
-            width: "100px",
-            height: "100px",
-            cursor: "pointer",
-            zIndex: 1000,
-            }}
-         >
-        <ChatBot />
-        </div>
-        )}
+      {/* 3D BUTTON REMOVED */}
       
     {/* CHAT PANEL */}
 

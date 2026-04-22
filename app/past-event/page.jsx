@@ -1,1147 +1,547 @@
 "use client";
-
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
-import { Calendar, MapPin, Tag, Users, Video } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Inline 3D card helpers (kept here to avoid extra files)
-const CardContext = createContext({ isHovering: false });
 
-function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
+// Example event data (add category, id, blur, etc.)
+const events = [
+  {
+    id: 1,
+    title: "MST Blockchain Summit 2025",
+    date: "March 12, 2025",
+    desc: "A gathering of innovators, developers, and leaders in the blockchain space. Workshops, panels, and networking.",
+    img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80",
+    category: "Summit",
+    gallery: [
+      { id: 1, url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80" },
+      { id: 2, url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80" }
+    ]
+  },
+  {
+    id: 2,
+    title: "Validator Bootcamp",
+    date: "Jan 28, 2025",
+    desc: "Hands-on training for new and experienced validators. Live demos and Q&A.",
+    img: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80",
+    category: "Workshop",
+    gallery: [
+      { id: 1, url: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80" },
+      { id: 2, url: "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=800&q=80" }
+    ]
+  },
+  {
+    id: 3,
+    title: "MST Hackathon",
+    date: "Nov 10, 2024",
+    desc: "Builders compete to create the next big dApp on MST. Prizes and recognition.",
+    img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80",
+    category: "Hackathon",
+    gallery: [
+      { id: 1, url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80" },
+      { id: 2, url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80" }
+    ]
+  },
+  {
+    id: 4,
+    title: "Community Meetup Pune",
+    date: "Sep 15, 2024",
+    desc: "A casual get-together for MST enthusiasts, with talks and networking.",
+    img: "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?auto=format&fit=crop&w=600&q=80",
+    category: "Meetup",
+    gallery: [
+      { id: 1, url: "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?auto=format&fit=crop&w=800&q=80" },
+      { id: 2, url: "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?auto=format&fit=crop&w=800&q=80" }
+    ]
+  },
+  {
+    id: 5,
+    title: "Web3 for Enterprises",
+    date: "Aug 2, 2024",
+    desc: "Panel discussion on enterprise adoption of Web3 and blockchain.",
+    img: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80",
+    category: "Summit",
+    gallery: [
+      { id: 1, url: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80" },
+      { id: 2, url: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80" }
+    ]
+  },
+  {
+    id: 6,
+    title: "MST Awards Night",
+    date: "May 30, 2024",
+    desc: "Celebrating the best projects and contributors in the MST ecosystem.",
+    img: "https://images.unsplash.com/photo-1515168833906-d2a3b82b302b?auto=format&fit=crop&w=600&q=80",
+    category: "Meetup",
+    gallery: [
+      { id: 1, url: "https://images.unsplash.com/photo-1515168833906-d2a3b82b302b?auto=format&fit=crop&w=800&q=80" },
+      { id: 2, url: "https://images.unsplash.com/photo-1515168833906-d2a3b82b302b?auto=format&fit=crop&w=800&q=80" }
+    ]
+  }
+];
 
-function CardContainer({ children, className = "" }) {
-  const [isHovering, setIsHovering] = useState(false);
-
+// HERO SECTION COMPONENT
+function HeroSection({ onExplore }) {
+  const heroImages = [
+    { src: "/assets/events/event1.jpg", alt: "Summit" },
+    { src: "/assets/events/event2.jpg", alt: "Bootcamp" },
+    { src: "/assets/events/event3.jpg", alt: "Hackathon" },
+  ];
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIndex(i => (i + 1) % heroImages.length), 5000);
+    return () => clearInterval(timer);
+  }, []);
   return (
-    <CardContext.Provider value={{ isHovering }}>
-      <div
-        className={cn("[perspective:1200px]", className)}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-      >
-        {children}
+    <section className="relative w-full h-[490px] flex items-center justify-center overflow-hidden pt-6">
+      <div className="flex flex-col items-center text-center w-full px-4 p-0 m-0">
+        <motion.h1
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="text-5xl md:text-7xl font-black mb-4 tracking-tight"
+        >
+          <span className="text-red-600">PAST</span>{' '}
+          <span className="text-black">EVENTS</span>
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.7 }}
+          className="text-lg md:text-2xl text-black max-w-2xl mb-8"
+        >
+          Relive the moments that defined MST. Explore our premium event gallery and discover the energy of our community.
+        </motion.p>
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onExplore}
+          className="px-8 py-3 rounded-full bg-black text-white font-bold text-lg shadow-lg hover:bg-red-600 hover:text-white hover:shadow-2xl transition"
+        >
+          Explore Gallery
+        </motion.button>
       </div>
-    </CardContext.Provider>
+    </section>
   );
 }
 
-function CardBody({ children, className = "", maxTilt = 10 }) {
-  const ref = useRef(null);
-  const [rotate, setRotate] = useState({ x: 0, y: 0 });
-
-  const onMove = (e) => {
-    const el = ref.current;
-    if (!el) return;
-
-    const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const dx = x - rect.width / 2;
-    const dy = y - rect.height / 2;
-
-    const ry = (dx / (rect.width / 2)) * maxTilt;
-    const rx = (-dy / (rect.height / 2)) * maxTilt;
-
-    setRotate({ x: rx, y: ry });
-  };
-
-  const onLeave = () => {
-    setRotate({ x: 0, y: 0 });
-  };
-
+// FILTER BAR COMPONENT
+function FilterBar({ active, setActive }) {
+  const categories = ["All", "Hackathon", "Meetup", "Summit", "Workshop"];
   return (
-    <div
-      ref={ref}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      className={cn(
-        "relative [transform-style:preserve-3d] transition-transform duration-200 ease-out",
-        className
-      )}
-      style={{
-        transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
-      }}
-    >
-      {children}
+    <div className="flex gap-3 md:gap-6 justify-center items-center pt-1 pb-6">
+        {categories.map((cat) => {
+          const isActive = active === cat;
+          const isSpecial = ["Hackathon", "Meetup", "Summit", "Workshop"].includes(cat);
+          return (
+            <motion.button
+              key={cat}
+              whileHover={{ scale: 1.1 }}
+              className={`px-5 py-2 rounded-full font-semibold text-sm md:text-base transition shadow-md border-2 border-gray-300
+                ${isActive ? "bg-white text-black border-red-600 shadow" : isSpecial ? "bg-white text-black hover:bg-red-600 hover:text-white border-gray-400" : "bg-black/60 text-white border-gray-300 hover:border-red-600 hover:text-red-400"}
+              `}
+              onClick={() => setActive(cat)}
+            >
+              {cat}
+            </motion.button>
+          );
+        })}
     </div>
   );
 }
 
-function CardItem({
-  as: Comp = "div",
-  children,
-  className = "",
-  translateZ = 0,
-  style,
-  ...props
-}) {
-  const { isHovering } = useContext(CardContext);
-
-  const tz =
-    typeof translateZ === "number"
-      ? `${translateZ}px`
-      : typeof translateZ === "string"
-        ? translateZ
-        : "0px";
-
-  const mergedStyle = useMemo(() => {
-    const base = {
-      transform: `translateZ(${tz})`,
-      transformStyle: "preserve-3d",
-      transition: "transform 200ms ease-out",
-    };
-
-    // Subtle extra pop on hover
-    if (isHovering && tz !== "0px") {
-      base.transform = `translateZ(calc(${tz} + 10px))`;
-    }
-
-    return { ...base, ...(style || {}) };
-  }, [isHovering, style, tz]);
-
+// EVENT CARD COMPONENT
+function EventCard({ event, onClick }) {
+  const cardRef = useRef(null);
+  const handleMouseMove = (e) => {
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * 8;
+    const rotateY = ((x - centerX) / centerX) * -8;
+    card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.04)`;
+  };
+  const handleMouseLeave = () => {
+    const card = cardRef.current;
+    if (card) card.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+  };
   return (
-    <Comp className={className} style={mergedStyle} {...props}>
-      {children}
-    </Comp>
+    <motion.div
+      ref={cardRef}
+      className="relative rounded-2xl overflow-hidden shadow-lg cursor-pointer group border border-white/10 bg-black"
+      whileHover={{ scale: 1.02 }}
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onClick={onClick}
+      style={{ willChange: "transform", minHeight: 380, minWidth: 320, maxWidth: 420 }}
+    >
+      <div className="relative w-full h-[320px] md:h-[380px] lg:h-[420px]">
+        <Image
+          src={event.img}
+          alt={event.title}
+          fill
+          className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          placeholder="blur"
+          blurDataURL={event.blur || "/assets/blur-placeholder.png"}
+        />
+
+        {/* center-right circular indicator */}
+        <div className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full border-2 border-white/90 flex items-center justify-center pointer-events-auto">
+          <div className="w-8 h-8 rounded-full border border-white/60" />
+        </div>
+
+        {/* top-right heart icon */}
+        <button
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-md"
+          aria-label="Like"
+          onClick={(e) => { e.stopPropagation(); /* optional like handler */ }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 3.99 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 18.01 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+          </svg>
+        </button>
+
+        {/* bottom gradient overlay to improve text readability */}
+        <div className="absolute left-0 right-0 bottom-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
+      </div>
+
+      {/* Title & subtitle centered over the bottom */}
+      <div className="absolute bottom-6 left-6 right-6 flex flex-col items-center text-center gap-1 pointer-events-none">
+        <div className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight drop-shadow-lg">
+          {event.title}
+        </div>
+        <div className="text-sm md:text-base text-white/90 font-medium tracking-wide">
+          {event.date}
+        </div>
+        <div className="text-sm md:text-sm text-white/80 mt-2 w-full max-w-[90%] line-clamp-1">
+          {event.desc}
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
-const allEvents = [
-  {
-    title: "Hackathon 2025",
-    date: "Dec 5, 2025",
-    location: "Dubai, UAE",
-    format: "In-person",
-    audience: "Builders • Students • Startups",
-    about:
-      "A 48-hour builder sprint focused on MST tooling, smart-contract patterns, and real-world use cases. Teams shipped MVPs, demos, and open-source integrations.",
-    highlights: [
-      "Workshops on MST architecture and tooling",
-      "Mentorship hours + pitch practice",
-      "Demo day with community judging",
-    ],
-    tags: ["Hackathon", "Builders", "Web3"],
-    image: "/img1.webp",
-    gallery: [
-      {
-        src: "/img1.webp",
-        title: "Opening + Team Formation",
-        description:
-          "Builders kicked off with a quick orientation, problem statements, and rapid team formation.",
-        points: ["Briefing + tracks", "Team matching", "Starter kits"],
-      },
-      {
-        src: "/img2.jpg",
-        title: "Workshops & Mentorship",
-        description:
-          "Hands-on sessions on MST architecture, smart contracts, and integration patterns.",
-        points: ["Architecture deep-dive", "Code reviews", "Office hours"],
-      },
-      {
-        src: "/img3.jpeg",
-        title: "Build Sprint",
-        description:
-          "Teams shipped MVPs with iterative feedback loops and nightly checkpoints.",
-        points: ["MVP shipping", "Testing", "Iteration"],
-      },
-      {
-        src: "/1.png",
-        title: "Demo Day",
-        description:
-          "Final presentations, community judging, and project showcases.",
-        points: ["Pitching", "Live demos", "Awards"],
-      },
-    ],
-  },
-  {
-    title: "Validator Training",
-    date: "Jan 15, 2026",
-    location: "Online",
-    format: "Virtual",
-    audience: "Node Operators • DevOps",
-    about:
-      "Hands-on training covering node setup, monitoring, upgrades, and best practices for running MST validators in production environments.",
-    highlights: [
-      "Step-by-step validator setup",
-      "Security & key management best practices",
-      "Monitoring + troubleshooting playbook",
-    ],
-    tags: ["Validators", "Infrastructure", "Training"],
-    image: "/img3.jpeg",
-    gallery: [
-      {
-        src: "/img3.jpeg",
-        title: "Node Setup Walkthrough",
-        description:
-          "A complete validator setup from scratch with recommended parameters and safe defaults.",
-        points: ["Install + config", "Sync checks", "First blocks"],
-      },
-      {
-        src: "/1.png",
-        title: "Security & Key Management",
-        description:
-          "Best practices for key rotation, backups, and operational security.",
-        points: ["Secure storage", "Rotation policies", "Incident response"],
-      },
-      {
-        src: "/img2.jpg",
-        title: "Monitoring & Alerts",
-        description:
-          "Dashboards, metrics, and alerting strategies to keep validators healthy.",
-        points: ["Health metrics", "Alert rules", "Runbooks"],
-      },
-      {
-        src: "/img1.webp",
-        title: "Troubleshooting Playbook",
-        description:
-          "Common failure modes and quick fixes for production operations.",
-        points: ["Logs", "Resync", "Upgrade steps"],
-      },
-    ],
-  },
-  {
-    title: "Community Meetup",
-    date: "Mar 10, 2026",
-    location: "Lahore, PK",
-    format: "Hybrid",
-    audience: "Community • Creators • Developers",
-    about:
-      "A community evening to share progress, product demos, and upcoming roadmap items. Meet builders, learn from talks, and connect with the MST ecosystem.",
-    highlights: [
-      "Lightning talks + demos",
-      "Ecosystem partner spotlights",
-      "Networking session",
-    ],
-    tags: ["Community", "Meetup", "Ecosystem"],
-    image: "/img2.jpg",
-    gallery: [
-      {
-        src: "/img2.jpg",
-        title: "Welcome & Updates",
-        description:
-          "Project updates, roadmap highlights, and what’s coming next for MST.",
-        points: ["Roadmap", "Milestones", "Announcements"],
-      },
-      {
-        src: "/img1.webp",
-        title: "Lightning Talks",
-        description:
-          "Short talks by community members on use cases, tooling, and lessons learned.",
-        points: ["Talks", "Demos", "Q&A"],
-      },
-      {
-        src: "/1.png",
-        title: "Partner Spotlights",
-        description:
-          "Ecosystem partners shared integrations and opportunities for builders.",
-        points: ["Integrations", "Grants", "Collaboration"],
-      },
-      {
-        src: "/img3.jpeg",
-        title: "Networking",
-        description:
-          "Meet builders, connect with teams, and explore collaboration ideas.",
-        points: ["Meet & greet", "Ideas", "Hiring"],
-      },
-    ],
-  },
-  {
-    title: "Mainnet Launch Event",
-    date: "Apr 15, 2026",
-    location: "Singapore",
-    format: "In-person",
-    audience: "Ecosystem • Partners • Media",
-    about:
-      "The official mainnet launch celebration: keynote, live network milestones, ecosystem announcements, and partner showcases.",
-    highlights: [
-      "Mainnet status + milestone reveal",
-      "Partner showcases",
-      "Roadmap & growth announcements",
-    ],
-    tags: ["Mainnet", "Launch", "Milestones"],
-    image: "/1.png",
-    gallery: [
-      {
-        src: "/1.png",
-        title: "Keynote",
-        description:
-          "The mainnet vision, mission, and what it unlocks for builders and partners.",
-        points: ["Vision", "Ecosystem", "Launch"],
-      },
-      {
-        src: "/img3.jpeg",
-        title: "Network Milestones",
-        description:
-          "Live milestones and performance highlights from the network.",
-        points: ["Blocks", "Validators", "Uptime"],
-      },
-      {
-        src: "/img1.webp",
-        title: "Partner Showcases",
-        description:
-          "Partners demonstrated integrations, products, and upcoming launches.",
-        points: ["Demos", "Integrations", "Announcements"],
-      },
-      {
-        src: "/img2.jpg",
-        title: "Celebration",
-        description:
-          "A closing celebration with community, media, and ecosystem partners.",
-        points: ["Community", "Press", "Afterparty"],
-      },
-    ],
-  },
-];
-
-const eventHighlights = [
-  {
-    label: "COMMUNITY MEETUP",
-    alt: "Community meetup highlight",
-    images: ["/img2.jpg", "/img3.jpeg", "/img1.webp", "/1.png"],
-  },
-  {
-    label: "VALIDATOR TRAINING",
-    alt: "Validator training highlight",
-    images: ["/img3.jpeg", "/img2.jpg", "/1.png", "/img1.webp"],
-  },
-  {
-    label: "HACKATHON 2025",
-    alt: "Hackathon highlight",
-    images: ["/img1.webp", "/1.png", "/img2.jpg", "/img3.jpeg"],
-  },
-];
-
-export default function PastEventsPage() {
-  const [highlightIndexes, setHighlightIndexes] = useState(() =>
-    eventHighlights.map(() => 0)
+// GALLERY GRID COMPONENT
+function GalleryGrid({ events, onCardClick }) {
+  return (
+    <motion.div
+      className="grid grid-cols-3 gap-8 auto-rows-[380px] md:auto-rows-[420px] lg:auto-rows-[460px]"
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.08 } },
+      }}
+    >
+      <AnimatePresence>
+        {events.map((event, i) => (
+          <motion.div
+            key={event.id || i}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.5, delay: i * 0.05 }}
+          >
+            <EventCard event={event} onClick={() => onCardClick(i)} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </motion.div>
   );
+}
 
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [isEventOpen, setIsEventOpen] = useState(false);
-  const [eventSlideIndex, setEventSlideIndex] = useState(0);
-  const carouselRef = useRef(null);
+// GALLERY MODAL COMPONENT
 
-  const selectedGallery =
-    selectedEvent?.gallery?.length
-      ? selectedEvent.gallery
-      : selectedEvent?.images?.length
-        ? selectedEvent.images.map((src, idx) => ({
-            src,
-            title: `Moment ${idx + 1}`,
-            description: "",
-            points: [],
-          }))
-        : selectedEvent?.image
-          ? [{ src: selectedEvent.image, title: "", description: "", points: [] }]
-          : [];
+// PREMIUM CAROUSEL MODAL COMPONENT
+function CarouselModal({ open, event, index, onClose, onNavigate }) {
+  const modalRef = useRef();
+  const [current, setCurrent] = useState(index);
+  const [fullscreenImg, setFullscreenImg] = useState(null);
+  const [marqueePaused, setMarqueePaused] = useState(false);
 
-  const activeGalleryItem = selectedGallery.length
-    ? selectedGallery[eventSlideIndex % selectedGallery.length]
-    : null;
-
-  const activeEventSrc = activeGalleryItem?.src || "/img1.webp";
-
-  const galleryLen = selectedGallery.length;
-  const activeSlide = galleryLen ? eventSlideIndex % galleryLen : 0;
-  const progressLeft = galleryLen ? (activeSlide / galleryLen) * 100 : 0;
-  const progressWidth = galleryLen ? (1 / galleryLen) * 100 : 0;
-
-  const scrollToEventSlide = (index, behavior = "smooth") => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const width = el.clientWidth;
-    el.scrollTo({ left: width * index, behavior });
-  };
-
-  const setEventSlide = (index, behavior = "smooth") => {
-    const len = selectedGallery.length;
-    if (!len) return;
-    const next = ((index % len) + len) % len;
-    setEventSlideIndex(next);
-    scrollToEventSlide(next, behavior);
-  };
-
-  const openEvent = (event) => {
-    setSelectedEvent(event);
-    setIsEventOpen(true);
-    setEventSlideIndex(0);
-  };
-
-  const closeEvent = () => {
-    setIsEventOpen(false);
-  };
-
-  const nextEventSlide = () => setEventSlide(eventSlideIndex + 1);
-  const prevEventSlide = () => setEventSlide(eventSlideIndex - 1);
-
+  useEffect(() => { setCurrent(index); }, [index, open]);
   useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setHighlightIndexes((prev) =>
-        prev.map((idx, i) => {
-          const len = eventHighlights[i]?.images?.length || 1;
-          return (idx + 1) % len;
-        })
-      );
-    }, 3500);
+    if (!event || !event.gallery) return; // Ensure event and gallery exist
 
-    return () => window.clearInterval(intervalId);
-  }, []);
+    function handleKey(e) {
+      if (!open) return;
+      if (e.key === 'ArrowRight') setCurrent(c => Math.min(event.gallery.length - 1, c + 1));
+      if (e.key === 'ArrowLeft') setCurrent(c => Math.max(0, c - 1));
+      if (e.key === 'Escape') onClose();
+    }
 
-  useEffect(() => {
-    if (!isEventOpen) return;
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [open, event?.gallery?.length, onClose]);
 
-    const previousOverflow = document.body.style.overflow;
-    const previousHideNavbar = document.body.dataset.hideNavbar;
+  const marqueeImages = event?.gallery ? [...event.gallery] : []; // Use event.gallery directly for unique images
+  const handleImageClick = (imgUrl) => {
+    setFullscreenImg(imgUrl);
+    setMarqueePaused(true);
+  };
+  const handleCloseFullscreen = (e) => {
+    e.stopPropagation();
+    setFullscreenImg(null);
+    setMarqueePaused(false);
+  };
 
-    const navbarEl = document.getElementById("site-navbar");
-    const previousNavbarDisplay = navbarEl?.style?.display;
-
-    document.body.style.overflow = "hidden";
-    document.body.dataset.hideNavbar = "true";
-
-    if (navbarEl) navbarEl.style.display = "none";
-
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") closeEvent();
-      if (e.key === "ArrowLeft") prevEventSlide();
-      if (e.key === "ArrowRight") nextEventSlide();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-
-      if (previousHideNavbar === undefined) {
-        delete document.body.dataset.hideNavbar;
-      } else {
-        document.body.dataset.hideNavbar = previousHideNavbar;
-      }
-
-      if (navbarEl) {
-        navbarEl.style.display = previousNavbarDisplay || "";
-      }
-
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [isEventOpen, selectedGallery.length, eventSlideIndex]);
-
-  useEffect(() => {
-    if (!isEventOpen) return;
-    // Ensure we always start from the first slide when opening / switching events
-    scrollToEventSlide(0, "auto");
-  }, [isEventOpen, selectedEvent?.title]);
-
-  const featureImages = eventHighlights[0]?.images ?? [];
-  const featureSrc = featureImages.length
-    ? featureImages[highlightIndexes[0] % featureImages.length]
-    : "/img1.webp";
+  if (!open) return null;
+  if (!event) return null; // Ensure event is defined before rendering
 
   return (
-    <>
-      <main className="relative overflow-hidden bg-white text-black">
-        {/* Orbit background (full page) */}
-        <div className="pointer-events-none absolute inset-0 z-0">
-          {/* Orbit 1 */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={onClose}>
+      <motion.div
+        className="relative rounded-3xl overflow-hidden shadow-2xl bg-white border-4 border-black max-w-2xl w-[95vw] flex flex-col items-center"
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.25 }}
+        onClick={e => e.stopPropagation()}
+        ref={modalRef}
+      >
+        <div className="overflow-hidden w-full py-8" style={{ minHeight: '320px' }}>
           <motion.div
-            animate={{ rotate: [360, 0] }}
-            transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-            className="absolute top-1/2 left-1/2 h-[110vmax] w-[110vmax] -translate-x-1/2 -translate-y-1/2 rounded-full border-[0.5px] border-red-300/70 hidden lg:flex items-center justify-center"
+            className="flex gap-8 px-10"
+            style={{ width: marqueeImages.length * 260 + (marqueeImages.length - 1) * 32 }}
+            animate={marqueePaused ? {} : { x: [0, -(marqueeImages.length * 260 + (marqueeImages.length - 1) * 32) / 2] }}
+            transition={marqueePaused ? {} : {
+              duration: 22,
+              ease: "linear",
+              repeat: Infinity,
+              repeatType: "loop"
+            }}
           >
-            <div className="absolute bottom-[18%] right-[8%] h-[6px] w-[6px] rounded-full bg-red-600 shadow-[0_0_10px_#ff2d2d]" />
-
-            {/* Orbital Text Node */}
-            <motion.div
-              animate={{ rotate: [-360, 0] }}
-              transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-              className="absolute top-[10%] left-[10%] flex items-center gap-2"
-            >
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
-              </span>
-              <span className="whitespace-nowrap text-[9px] font-black tracking-[0.2em] text-red-300">
-                Use Cases
-              </span>
-            </motion.div>
-          </motion.div>
-
-          {/* Orbit 2: Middle Dashed Ring */}
-          <motion.div
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-            className="absolute top-1/2 left-1/2 h-[140vmax] w-[140vmax] -translate-x-1/2 -translate-y-1/2 rounded-full border-[0.5px] border-black/10 border-dashed hidden lg:flex items-center justify-center"
-          >
-            <div className="absolute top-[12%] h-2 w-2 rounded-full bg-red-500 shadow-[0_0_15px_#ff2d2d]" />
-
-            {/* Orbital Text Node */}
-            <motion.div
-              animate={{ rotate: [360, 0] }}
-              transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-              className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center gap-2 pr-4 rounded-full bg-white/50 p-1 backdrop-blur-[2px] border border-white/60"
-            >
-              <div className="h-px w-8 bg-gradient-to-r from-transparent via-red-500 to-red-200" />
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-              </span>
-              <span className="whitespace-nowrap text-[10px] font-black tracking-[0.2em] text-red-400">
-                9+ Active Nodes
-              </span>
-            </motion.div>
-          </motion.div>
-
-          {/* Orbit 3: Outer Faint Ring */}
-          <motion.div
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-            className="absolute top-1/2 left-1/2 h-[170vmax] w-[170vmax] -translate-x-1/2 -translate-y-1/2 rounded-full border-[0.5px] border-black/5 hidden lg:flex items-center justify-center"
-          >
-            {/* Orbital Text Node */}
-            <motion.div
-              animate={{ rotate: [360, 0] }}
-              transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-              className="absolute bottom-[20%] left-[10%] flex items-center gap-2 opacity-50"
-            >
-              <span className="relative inline-flex h-1 w-1 rounded-full bg-black" />
-              <span className="whitespace-nowrap text-[8px] font-bold tracking-[0.25em] text-red-300">
-                POSA Consensus
-              </span>
-            </motion.div>
-          </motion.div>
-
-          {/* Small floating local elements */}
-          <motion.div
-            animate={{ y: [-15, 15, -15], x: [-10, 10, -10], rotate: [0, 90, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="absolute left-10 top-24 hidden lg:flex h-24 w-24 items-center justify-center rounded-full border border-red-500/70 opacity-50"
-          >
-            <div className="h-16 w-16 rounded-full border border-red-500/70" />
-            <div className="absolute top-0 h-1.5 w-1.5 rounded-full bg-red-500 shadow-[0_0_10px_#ff2d2d]" />
-          </motion.div>
-
-          <motion.div
-            animate={{ y: [15, -15, 15], rotate: [0, -90, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-20 right-10 hidden lg:flex h-32 w-32 items-center justify-center rounded-full border border-red-500/70 border-dashed opacity-40"
-          >
-            <div className="absolute bottom-2 right-4 h-2 w-2 rounded-full bg-black" />
+            {marqueeImages.map((image, idx) => (
+              <motion.div
+                key={image.id + '-' + idx}
+                className="flex-shrink-0 w-[210px] md:w-[260px] aspect-[3/4] relative z-10 cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                onClick={() => handleImageClick(image.url)}
+              >
+                <img
+                  src={image.url}
+                  alt="Gallery item"
+                  className="w-full h-full object-cover rounded-2xl shadow-2xl"
+                />
+              </motion.div>
+            ))}
           </motion.div>
         </div>
-
-        {/* Content */}
-        <div className="relative z-10">
-
-        {/* HERO SECTION */}
-        <section className="text-center pt-36 md:pt-44 pb-20 px-6 md:px-16">
-          <h1 className="text-[60px] md:text-[100px] font-bold leading-none">
-            THE <span className="text-red-500">EVENT</span> GALLERY
-          </h1>
-
-          <p className="text-gray-600 mt-6 max-w-2xl mx-auto">
-            Explore and relive the most impactful moments of MST events — 
-            from hackathons to global meetups and launches.
-          </p>
-        </section>
-
-        {/* FEATURE SECTION */}
-        <section className="grid md:grid-cols-2 gap-10 px-6 md:px-16 py-16 items-center">
-
-          <div>
-            <h2 className="text-4xl font-bold mb-4">
-              WE BUILD EXPERIENCES FOR THE FUTURE
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Our events bring together builders, innovators, and thinkers to shape
-              the decentralized future through collaboration and experimentation.
-            </p>
- 
-          </div>
-
-          <CardContainer className="w-full">
-            <CardBody className="relative h-[300px] md:h-[400px] w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_18px_60px_-30px_rgba(0,0,0,0.35)]">
-              <CardItem translateZ={80} className="relative h-full w-full">
-                <Image
-                  src={featureSrc}
-                  alt="MST events feature"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority
-                />
-              </CardItem>
-
-              <CardItem
-                translateZ={40}
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 via-black/0 to-transparent"
-              />
-            </CardBody>
-          </CardContainer>
-        </section>
-
-        {/* EXHIBITIONS GRID */}
-        <section className="px-6 md:px-16 py-20">
-          <h2 className="text-3xl font-bold mb-10">
-            EVENT <span className="text-red-500">HIGHLIGHTS</span>
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {eventHighlights.map((highlight, i) => {
-              const images = highlight.images || [];
-              const activeIndex = highlightIndexes[i] || 0;
-              const src = images.length ? images[activeIndex % images.length] : "/img1.webp";
-
-              return (
-                <div key={highlight.label} className="space-y-6">
-                  <div className="relative h-[250px]">
-                    <Image
-                      src={src}
-                      alt={highlight.alt}
-                      fill
-                      className="object-cover rounded-xl"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                    />
-                  </div>
-                  <p className="text-sm text-gray-500">{highlight.label}</p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* MID BANNER SECTION */}
-        <section className="bg-red-500 text-white text-center py-20 px-6">
-          <h2 className="text-5xl font-bold">
-            HARMONY & IMPACT 
-          </h2>
-          <p className="mt-4 text-white/80 max-w-xl mx-auto">
-            Every event is crafted to inspire innovation and create meaningful
-            connections within the Web3 ecosystem.
-          </p>
-        </section>
-
-        {/* TIMELINE / LIST */}
-        <section className="px-6 md:px-16 py-20">
-          <h2 className="text-3xl font-bold mb-10">
-            ALL EVENTS
-          </h2>
-
-          <div className="space-y-6">
-
-            {allEvents.map((event) => (
-              <div
-                key={event.title}
-                className="flex items-center justify-between gap-4 border-b pb-4"
+        {fullscreenImg && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm" onClick={handleCloseFullscreen}>
+            <div className="relative max-w-3xl w-full flex items-center justify-center">
+              <img src={fullscreenImg} alt="Full" className="max-h-[80vh] max-w-full rounded-2xl shadow-2xl" />
+              <button
+                onClick={handleCloseFullscreen}
+                className="absolute top-4 right-4 text-white bg-black/70 hover:bg-red-600 rounded-full p-2 shadow-lg"
+                aria-label="Close fullscreen image"
               >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
-                    {event.title}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">{event.date}</p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="relative hidden h-12 w-16 overflow-hidden rounded-xl border border-black/10 bg-black/5 sm:block">
-                    <Image
-                      src={event.image}
-                      alt={event.title}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => openEvent(event)}
-                    className="text-red-500 hover:underline whitespace-nowrap"
-                  >
-                    View →
-                  </button>
-                </div>
-              </div>
-            ))}
-
-          </div>
-        </section>
-
-        {/* ALL EVENTS: View modal slider */}
-        {isEventOpen && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 md:items-center">
-            <div
-              className="absolute inset-0 bg-black/45 backdrop-blur-xl"
-              onClick={closeEvent}
-            />
-
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-label={
-                selectedEvent ? `${selectedEvent.title} gallery` : "Event gallery"
-              }
-              initial={{ opacity: 0, y: 14, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              className="relative flex w-full max-w-[1100px] flex-col overflow-hidden rounded-3xl border border-white/30 bg-white/70 shadow-[0_30px_120px_-40px_rgba(0,0,0,0.55)] ring-1 ring-black/10 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 max-h-[92vh]"
-            >
-              <div className="flex items-start justify-between gap-4 border-b border-black/10 bg-white/60 px-5 py-4 backdrop-blur">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-black truncate">
-                    {selectedEvent?.title ?? "Event"}
-                  </p>
-                  <p className="text-xs text-black/60 mt-1">
-                    {selectedEvent?.date ?? ""}
-                  </p>
-                </div>
-
-                <motion.button
-                  type="button"
-                  onClick={closeEvent}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="rounded-xl border border-black/10 bg-white/70 px-3.5 py-2 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-white"
-                >
-                  Close
-                </motion.button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto">
-                <div className="overflow-hidden bg-white/55 shadow-[0_18px_70px_-38px_rgba(0,0,0,0.45)] backdrop-blur">
-                  {/* Carousel (scroll left/right) */}
-                  <div className="relative overflow-hidden">
-                    <div
-                      ref={carouselRef}
-                      onScroll={() => {
-                        const el = carouselRef.current;
-                        if (!el) return;
-                        const width = el.clientWidth || 1;
-                        const idx = Math.round(el.scrollLeft / width);
-                        if (idx !== eventSlideIndex) setEventSlideIndex(idx);
-                      }}
-                      className="flex w-full snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                      style={{ WebkitOverflowScrolling: "touch" }}
-                    >
-                      {selectedGallery.map((item, idx) => (
-                        <div
-                          key={`${item.src}-${idx}`}
-                          className="w-full flex-none snap-center"
-                        >
-                          <div className="relative h-[220px] w-full bg-black/5 sm:h-[260px] md:h-[300px] lg:h-[320px]">
-                            <motion.div
-                              className="absolute inset-0"
-                              initial={{ scale: 1.06 }}
-                              animate={{ scale: 1 }}
-                              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-                            >
-                              <div className="relative h-full w-full">
-                                <Image
-                                  src={item.src}
-                                  alt={
-                                    selectedEvent?.title
-                                      ? `${selectedEvent.title} image ${idx + 1}`
-                                      : `Event image ${idx + 1}`
-                                  }
-                                  fill
-                                  className="object-cover"
-                                  sizes="(max-width: 768px) 100vw, 1100px"
-                                  priority={idx === 0}
-                                />
-                              </div>
-                            </motion.div>
-
-                            {/* Strong overlays */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/0 to-transparent" />
-
-                            {/* Title + date on top of image */}
-                            <div className="absolute left-4 right-4 top-4 flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-white/80">
-                                  Event Gallery
-                                </p>
-                                <p className="mt-1 truncate text-lg font-extrabold text-white md:text-xl">
-                                  {selectedEvent?.title ?? "Event"}
-                                </p>
-                                <p className="mt-1 text-xs text-white/70">
-                                  {selectedEvent?.date ?? ""}
-                                </p>
-                              </div>
-
-                              <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-black shadow-sm">
-                                {idx + 1}/{selectedGallery.length}
-                              </span>
-                            </div>
-
-                            {/* Slide title chip */}
-                            {item.title ? (
-                              <div className="absolute left-4 bottom-3 right-4 flex items-center justify-between gap-3">
-                                <span className="inline-flex max-w-full rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
-                                  {item.title}
-                                </span>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Controls */}
-                    {selectedGallery.length > 1 && (
-                      <>
-                        <motion.button
-                          type="button"
-                          onClick={prevEventSlide}
-                          whileHover={{ scale: 1.06 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/30 bg-white/70 px-3 py-2 text-sm font-semibold text-black shadow-lg backdrop-blur transition-all duration-300 ease-out hover:bg-white"
-                          aria-label="Previous image"
-                        >
-                          ←
-                        </motion.button>
-
-                        <motion.button
-                          type="button"
-                          onClick={nextEventSlide}
-                          whileHover={{ scale: 1.06 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/30 bg-white/70 px-3 py-2 text-sm font-semibold text-black shadow-lg backdrop-blur transition-all duration-300 ease-out hover:bg-white"
-                          aria-label="Next image"
-                        >
-                          →
-                        </motion.button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Thumbnails + progress */}
-                  {selectedGallery.length > 1 && (
-                    <div className="bg-white/55 px-4 py-4 backdrop-blur">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                          Thumbnails
-                        </p>
-                      </div>
-
-                      <div className="mt-3 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                        {selectedGallery.map((thumb, idx) => (
-                          <motion.button
-                            key={`${thumb.src}-thumb-${idx}`}
-                            type="button"
-                            onClick={() => setEventSlide(idx)}
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="flex-none"
-                            aria-label={`Open preview ${idx + 1}`}
-                          >
-                            <div
-                              className={
-                                idx === activeSlide
-                                  ? "relative h-14 w-20 overflow-hidden rounded-xl border-2 border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.22),0_18px_38px_-24px_rgba(239,68,68,0.85)]"
-                                  : "relative h-14 w-20 overflow-hidden rounded-xl border border-black/10 opacity-90 transition-all duration-300 ease-out hover:opacity-100"
-                              }
-                            >
-                              <Image
-                                src={thumb.src}
-                                alt={`Preview ${idx + 1}`}
-                                fill
-                                className="object-cover"
-                                sizes="80px"
-                              />
-                            </div>
-                          </motion.button>
-                        ))}
-                      </div>
-
-                      <div className="mt-3 h-1.5 w-full rounded-full bg-black/10">
-                        <motion.div
-                          className="h-full rounded-full bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.55)]"
-                          animate={{ left: `${progressLeft}%`, width: `${progressWidth}%` }}
-                          transition={{ type: "spring", stiffness: 260, damping: 28 }}
-                          style={{ position: "relative" }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Info (placed under the main image) */}
-                  <div className="grid gap-8 p-6 md:grid-cols-[7fr_3fr]">
-                    {/* LEFT: 70% */}
-                    <div className="space-y-5">
-                      {/* Step story */}
-                      <div className="rounded-xl border border-black/10 bg-white/70 p-5 shadow-[0_12px_40px_-28px_rgba(0,0,0,0.35)] backdrop-blur">
-                        <motion.div
-                          key={activeSlide}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.22, ease: "easeOut" }}
-                          className="space-y-4"
-                        >
-                          <div>
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                                Step {activeSlide + 1}
-                              </p>
-                              <p className="text-xs text-black/60">
-                                {activeSlide + 1}/{galleryLen}
-                              </p>
-                            </div>
-
-                            <div className="mt-2 h-1.5 w-full rounded-full bg-black/10">
-                              <motion.div
-                                className="h-full rounded-full bg-red-500 shadow-[0_0_18px_rgba(239,68,68,0.5)]"
-                                animate={{
-                                  width: `${galleryLen ? ((activeSlide + 1) / galleryLen) * 100 : 0}%`,
-                                }}
-                                transition={{ duration: 0.3, ease: "easeOut" }}
-                              />
-                            </div>
-
-                            <p className="mt-4 text-xl font-extrabold text-black md:text-2xl">
-                              {activeGalleryItem?.title || selectedEvent?.title || ""}
-                            </p>
-                            {activeGalleryItem?.description ? (
-                              <p className="mt-2 text-sm leading-relaxed text-black/70">
-                                {activeGalleryItem.description}
-                              </p>
-                            ) : null}
-                          </div>
-
-                          {activeGalleryItem?.points?.length ? (
-                            <ul className="space-y-2 text-sm text-black/70">
-                              {activeGalleryItem.points.map((p, idx) => (
-                                <li key={idx} className="flex gap-2">
-                                  <span className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/10 text-[12px] font-extrabold text-red-600">
-                                    ✓
-                                  </span>
-                                  <span className="leading-relaxed">{p}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </motion.div>
-
-                        {/* Quick navigation */}
-                        {selectedGallery.length > 1 && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.22, ease: "easeOut", delay: 0.05 }}
-                            className="mt-5 border-t border-black/10 pt-4"
-                          >
-                            <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                              Jump to
-                            </p>
-                            <div className="mt-3 flex items-center gap-2">
-                              {selectedGallery.map((_, idx) => (
-                                <motion.button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => setEventSlide(idx)}
-                                  whileHover={{ scale: 1.04 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  aria-label={`Go to image ${idx + 1}`}
-                                  className={
-                                    idx === activeSlide
-                                      ? "h-2.5 w-10 rounded-full bg-red-500"
-                                      : "h-2.5 w-6 rounded-full bg-black/15 hover:bg-black/25"
-                                  }
-                                />
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
-
-                      {/* Tags (moved to left) */}
-                      {selectedEvent?.tags?.length ? (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.24, ease: "easeOut", delay: 0.04 }}
-                          className="rounded-xl border border-black/10 bg-white/70 p-5 shadow-[0_10px_36px_-28px_rgba(0,0,0,0.3)] backdrop-blur"
-                        >
-                          <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                            Tags
-                          </p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {selectedEvent.tags.map((t) => (
-                              <span
-                                key={t}
-                                className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-600"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        </motion.div>
-                      ) : null}
-
-                      {/* About + Highlights (moved to left) */}
-                      {(selectedEvent?.about || selectedEvent?.highlights?.length) && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.24, ease: "easeOut", delay: 0.06 }}
-                          className="overflow-hidden rounded-xl border border-black/10 bg-white/70 shadow-[0_12px_40px_-28px_rgba(0,0,0,0.35)] backdrop-blur"
-                        >
-                          <div className="divide-y divide-black/10">
-                            {selectedEvent?.about ? (
-                              <div className="p-5">
-                                <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                                  About
-                                </p>
-                                <p className="mt-3 text-sm leading-relaxed text-black/70">
-                                  {selectedEvent.about}
-                                </p>
-                              </div>
-                            ) : null}
-
-                            {selectedEvent?.highlights?.length ? (
-                              <div className="p-5">
-                                <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                                  Highlights
-                                </p>
-                                <ul className="mt-3 space-y-2.5 text-sm text-black/70">
-                                  {selectedEvent.highlights.map((h, idx) => (
-                                    <li key={idx} className="flex gap-2.5">
-                                      <span className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/10 text-[12px] font-extrabold text-red-600">
-                                        →
-                                      </span>
-                                      <span className="leading-relaxed">{h}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ) : null}
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-
-                    {/* RIGHT: 30% (minimal metadata panel) */}
-                    <motion.div
-                      initial={{ opacity: 0, x: 8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.24, ease: "easeOut" }}
-                      className="self-start rounded-2xl border border-black/10 bg-white/70 p-5 shadow-[0_12px_40px_-28px_rgba(0,0,0,0.35)] backdrop-blur md:sticky md:top-6"
-                    >
-                      <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                        Event details
-                      </p>
-
-                      <div className="mt-4 grid grid-cols-2 gap-3">
-                        <div className="rounded-xl border border-black/10 bg-white/70 px-3 py-2.5">
-                          <div className="flex items-center gap-2 text-black/60">
-                            <Calendar className="h-4 w-4 text-red-500" />
-                            <span className="text-[10px] font-extrabold uppercase tracking-[0.22em]">Date</span>
-                          </div>
-                          <p className="mt-1 text-sm font-semibold text-black">
-                            {selectedEvent?.date ?? "-"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-black/10 bg-white/70 px-3 py-2.5">
-                          <div className="flex items-center gap-2 text-black/60">
-                            <MapPin className="h-4 w-4 text-red-500" />
-                            <span className="text-[10px] font-extrabold uppercase tracking-[0.22em]">Location</span>
-                          </div>
-                          <p className="mt-1 text-sm font-semibold text-black">
-                            {selectedEvent?.location ?? "-"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-black/10 bg-white/70 px-3 py-2.5">
-                          <div className="flex items-center gap-2 text-black/60">
-                            <Video className="h-4 w-4 text-red-500" />
-                            <span className="text-[10px] font-extrabold uppercase tracking-[0.22em]">Format</span>
-                          </div>
-                          <p className="mt-1 text-sm font-semibold text-black">
-                            {selectedEvent?.format ?? "-"}
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-black/10 bg-white/70 px-3 py-2.5">
-                          <div className="flex items-center gap-2 text-black/60">
-                            <Users className="h-4 w-4 text-red-500" />
-                            <span className="text-[10px] font-extrabold uppercase tracking-[0.22em]">Audience</span>
-                          </div>
-                          <p className="mt-1 text-sm font-semibold text-black">
-                            {selectedEvent?.audience ?? "-"}
-                          </p>
-                        </div>
-                      </div>
-
-                      {selectedEvent?.highlights?.length ? (
-                        <div className="mt-8 border-t border-black/10 pt-6">
-                          <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-black/50">
-                            Highlights
-                          </p>
-                          <ul className="mt-4 space-y-2.5 text-sm text-black/70">
-                            {selectedEvent.highlights.map((h, idx) => (
-                              <li key={idx} className="flex gap-2.5">
-                                <span className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-red-500/10 text-[12px] font-extrabold text-red-600">
-                                  →
-                                </span>
-                                <span className="leading-relaxed">{h}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                    </motion.div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
-
-        {/* FAQ STYLE SECTION */}
-        <section className="px-6 md:px-16 py-20">
-          <h2 className="text-5xl font-bold mb-10">
-            FAQ
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-6">
-
-            <div className="border p-6 rounded-xl">
-              <h3 className="font-semibold">How to join events?</h3>
-              <p className="text-gray-600 mt-2 text-sm">
-                Register via our platform and stay updated with announcements.
-              </p>
-            </div>
-
-            <div className="border p-6 rounded-xl">
-              <h3 className="font-semibold">Are events free?</h3>
-              <p className="text-gray-600 mt-2 text-sm">
-                Most events are free with limited seats.
-              </p>
-            </div>
-
-            <div className="border p-6 rounded-xl">
-              <h3 className="font-semibold">Where are events held?</h3>
-              <p className="text-gray-600 mt-2 text-sm">
-                Both online and offline across multiple cities.
-              </p>
-            </div>
-
-          </div>
-        </section>
-
+        <div className="w-full px-8 py-6 bg-white flex flex-col items-center gap-2 border-t border-black">
+          <div className="text-2xl font-extrabold text-black text-center">{event.title || ''}</div>
+          <div className="text-sm text-red-600 font-semibold">{event.date || ''}</div>
+          <div className="text-base text-black/80 text-center line-clamp-3">{event.desc || ''}</div>
         </div>
-      </main>
+      </motion.div>
+    </div>
+  );
+}
 
-    </>
+
+// GALLERY SECTION COMPONENT (replaces StorySections)
+function GallerySection() {
+  // Use a flat image array for the auto gallery
+  const images = [
+    { id: 1, url: 'https://images.unsplash.com/photo-1601275224155-21191b500140?q=80&w=800' },
+    { id: 2, url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800' },
+    { id: 3, url: 'https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?q=80&w=800' },
+    { id: 4, url: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=800' },
+    { id: 5, url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=800' },
+    { id: 6, url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=800' },
+  ];
+  // Duplicate images for seamless infinite loop
+  const imageList = [...images, ...images];
+  const totalWidth = imageList.length * 260 + (imageList.length - 1) * 32; // 260px width + 32px gap
+  return (
+    <section className="relative bg-black min-h-[60vh] w-full flex flex-col items-center justify-center overflow-hidden font-serif">
+      {/* 1. Background Title (Centered & Fixed to section) */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <h1 className="text-[12vw] font-bold tracking-tighter text-white/10 uppercase select-none whitespace-nowrap">
+          Gallery
+        </h1>
+      </div>
+
+      {/* 2. Sliding Image Track (infinite left loop) */}
+      <div className="relative w-full overflow-hidden flex items-center z-10" style={{ minHeight: '320px' }}>
+        <motion.div
+          className="flex gap-8 px-10"
+          style={{ width: totalWidth }}
+          animate={{ x: [0, -totalWidth / 2] }}
+          transition={{
+            duration: 22,
+            ease: "linear",
+            repeat: Infinity,
+            repeatType: "loop"
+          }}
+        >
+          {imageList.map((image, idx) => (
+            <motion.div
+              key={image.id + '-' + idx}
+              className="flex-shrink-0 w-[210px] md:w-[260px] aspect-[3/4] relative z-10"
+              whileHover={{ scale: 1.05 }}
+            >
+              <img
+                src={image.url}
+                alt="Gallery item"
+                className="w-full h-full object-cover rounded-2xl shadow-2xl"
+              />
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Optional: Vignette Overlay for depth (Darkens the edges) */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle,transparent_40%,black_100%)]" />
+    </section>
+  );
+}
+
+// Define floating blobs for background decoration
+const blobs = [
+  { className: "absolute w-40 h-40 bg-red-500 opacity-20 rounded-full top-10 left-10" },
+  { className: "absolute w-32 h-32 bg-black opacity-10 rounded-full bottom-20 right-20" },
+  { className: "absolute w-48 h-48 bg-white opacity-5 rounded-full top-1/3 left-1/4" },
+];
+
+export default function PastEvents() {
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [modal, setModal] = useState({ open: false, index: 0, event: null });
+  const filteredEvents = useMemo(() =>
+    activeCategory === "All"
+      ? events
+      : events.filter(e => e.category === activeCategory),
+    [activeCategory]
+  );
+
+  return (
+    <div className="bg-white min-h-screen font-sans relative overflow-x-hidden scroll-smooth">
+      {/* Orbital Animated Background */}
+      <div className="fixed inset-0 w-full h-full z-0 pointer-events-none">
+        {/* Orbit 1: Red solid ring */}
+        <motion.div
+          animate={{ rotate: [360, 0] }}
+          transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-[-5%] left-[-35%] w-[140vw] h-[140vw] border-[0.5px] border-red-300 rounded-full hidden lg:flex items-center justify-center"
+        >
+          <div className="absolute w-[10px] h-[10px] bg-red-600 rounded-full bottom-[18%] right-[8%] shadow-[0_0_10px_#ff2d2d]" />
+          <motion.div
+            animate={{ rotate: [-360, 0] }}
+            transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+            className="absolute top-[10%] left-[10%] flex items-center gap-2"
+          >
+            <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span></span>
+            <span className="text-[11px] font-black tracking-[0.2em] text-red-300 whitespace-nowrap">Use Cases</span>
+          </motion.div>
+        </motion.div>
+        {/* Orbit 2: Middle Dashed Ring */}
+        <motion.div
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-[-20%] left-[-60%] w-[180vw] h-[180vw] border-[0.5px] border-black/10 rounded-full border-dashed hidden lg:flex items-center justify-center"
+        >
+          <div className="absolute w-3 h-3 bg-red-400 rounded-full top-[12%] shadow-[0_0_15px_#ff2d2d]" />
+          <motion.div
+            animate={{ rotate: [360, 0] }}
+            transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
+            className="absolute -left-[5px] top-[50%] -translate-y-1/2 flex items-center gap-2 pr-4 bg-white/40 backdrop-blur-[2px] rounded-full p-1 border border-white/50"
+          >
+            <div className="h-px w-8 bg-gradient-to-r from-transparent via-red-400 to-red-200" />
+            <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-400"></span></span>
+            <span className="text-[10px] font-black tracking-[0.2em] text-red-400 whitespace-nowrap">9+ Active Nodes</span>
+          </motion.div>
+        </motion.div>
+        {/* Orbit 3: Outer Faint Ring */}
+        <motion.div
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-[-35%] left-[-85%] w-[240vw] h-[240vw] border-[0.5px] border-black/5 rounded-full hidden lg:flex items-center justify-center opacity-50"
+        >
+          <motion.div
+            animate={{ rotate: [360, 0] }}
+            transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
+            className="absolute bottom-[20%] left-[10%] flex items-center gap-2"
+          >
+            <span className="relative inline-flex rounded-full h-1 w-1 bg-black"></span>
+            <span className="text-[8px] font-bold tracking-[0.25em] text-red-300 whitespace-nowrap">POSA Consensus</span>
+          </motion.div>
+        </motion.div>
+        {/* Small floating local elements */}
+        <motion.div
+          animate={{ y: [-15, 15, -15], x: [-10, 10, -10], rotate: [0, 90, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+          className="absolute top-0 left-0 w-32 h-32 border border-red-500 rounded-full flex items-center justify-center opacity-60"
+        >
+          <div className="w-20 h-20 border border-red-500 rounded-full" />
+          <div className="absolute w-2 h-2 bg-red-400 rounded-full shadow-[0_0_10px_#ff2d2d] top-0" />
+        </motion.div>
+        <motion.div
+          animate={{ y: [15, -15, 15], rotate: [0, -90, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+          className="absolute bottom-0 right-0 w-40 h-40 border border-red-500 rounded-full border-dashed flex items-center justify-center opacity-50"
+        >
+          <div className="absolute w-3 h-3 bg-black rounded-full bottom-2 right-4" />
+        </motion.div>
+      </div>
+
+      {/* Floating Blobs */}
+      <div className="pointer-events-none fixed z-0 top-0 left-0 w-full h-full overflow-hidden">
+        {blobs.map((b, i) => <div key={i} className={b.className} />)}
+      </div>
+
+      {/* HERO SECTION */}
+      <HeroSection onExplore={() => {
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 600, behavior: "smooth" });
+        }
+      }} />
+
+      {/* FILTER BAR */}
+      <FilterBar active={activeCategory} setActive={setActiveCategory} />
+
+      {/* GALLERY GRID */}
+      <div className="max-w-7xl mx-auto px-2 md:px-6 py-4 z-10">
+        <GalleryGrid events={filteredEvents} onCardClick={i => setModal({ open: true, index: i, event: filteredEvents[i] })} />
+      </div>
+
+
+      {/* PREMIUM CAROUSEL MODAL */}
+      <CarouselModal
+        open={modal.open}
+        event={modal.event}
+        index={modal.index}
+        onClose={() => {
+          setModal({ open: false, index: 0, event: null });
+          window.dispatchEvent(new CustomEvent('gallery-modal', { detail: false }));
+        }}
+        onNavigate={i => setModal(m => ({ ...m, index: Math.max(0, Math.min(m.event.gallery.length - 1, i)) }))}
+      />
+
+      {/* GALLERY SECTION (replaces StorySections) */}
+      <GallerySection />
+    </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import Link from 'next/link';
-import DotGrid from './DotGrid';
+
 
 
 const logos = [

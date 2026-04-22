@@ -231,4 +231,4 @@ const DotGrid = ({
     </section>
   );
 };
-export default DotGrid;
+export default () => null;
